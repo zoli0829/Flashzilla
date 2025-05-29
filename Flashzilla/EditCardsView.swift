@@ -6,11 +6,14 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct EditCardsView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.modelContext) var modelContext
     
-    @State private var cards = [Card]()
+    @Query(sort: \Card.prompt) var cards: [Card]
+    
     @State private var newPrompt = ""
     @State private var newAnswer = ""
     
@@ -40,26 +43,11 @@ struct EditCardsView: View {
             .toolbar {
                 Button("Done", action: done)
             }
-            .onAppear(perform: loadData)
         }
     }
     
     func done() {
         dismiss()
-    }
-    
-    func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
-    }
-    
-    func saveData() {
-        if let data = try? JSONEncoder().encode(cards) {
-            UserDefaults.standard.set(data, forKey: "Cards")
-        }
     }
     
     func addCard() {
@@ -71,13 +59,18 @@ struct EditCardsView: View {
         }
         
         let card = Card(prompt: trimmedPrompt, answer: trimmedAnswer)
-        cards.insert(card, at: 0)
-        saveData()
+        modelContext.insert(card)
+        
+        // Challenge 1: textfields should clear themselves after the card is added
+        newAnswer = ""
+        newPrompt = ""
     }
     
     func removeCards(at offsets: IndexSet) {
-        cards.remove(atOffsets: offsets)
-        saveData()
+        for index in offsets {
+            let card = cards[index]
+            modelContext.delete(card)
+        }
     }
 }
 

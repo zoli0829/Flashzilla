@@ -5,6 +5,7 @@
 //  Created by Zoltan Vegh on 24/05/2025.
 //
 
+import SwiftData
 import SwiftUI
 
 extension View {
@@ -17,10 +18,11 @@ extension View {
 struct ContentView: View {
     @Environment(\.accessibilityDifferentiateWithoutColor) var accessibilityDifferentiateWithoutColor
     @Environment(\.accessibilityVoiceOverEnabled) var accessibilityVoiceOverEnabled
+    @Environment(\.modelContext) var modelContext
     
-    @State private var cards = [Card]()
+    @Query(sort: \Card.prompt) var cards: [Card]
+    
     @State private var showingEditScreen = false
-    
     @State private var timeRemaining = 100
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     
@@ -145,9 +147,10 @@ struct ContentView: View {
     }
     
     func removeCard(at index: Int) {
-        guard index >= 0 else { return }
+        guard index >= 0 && index < cards.count else { return }
         
-        cards.remove(at: index)
+        let card = cards[index]
+        modelContext.delete(card)
         
         if cards.isEmpty {
             isActive = false
@@ -157,15 +160,6 @@ struct ContentView: View {
     func resetCards() {
         timeRemaining = 100
         isActive = true
-        loadData()
-    }
-    
-    func loadData() {
-        if let data = UserDefaults.standard.data(forKey: "Cards") {
-            if let decoded = try? JSONDecoder().decode([Card].self, from: data) {
-                cards = decoded
-            }
-        }
     }
 }
 

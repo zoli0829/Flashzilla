@@ -13,5 +13,6 @@ struct FlashzillaApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: Card.self)
     }
 }
